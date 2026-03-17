@@ -11,7 +11,7 @@ h3 {
     color: #333;
 }
 
-/* --- NOVO: Barra de Pesquisa (V1.3) --- */
+/* --- Barra de Pesquisa (V1.3) --- */
 .search-container {
     margin-bottom: 15px;
 }
@@ -19,8 +19,8 @@ h3 {
 #search-input {
     width: 100%;
     padding: 10px 15px;
-    border: 2px solid #2563eb; /* Azul para destacar a função de busca */
-    border-radius: 20px; /* Estilo arredondado tipo Google */
+    border: 2px solid #2563eb;
+    border-radius: 20px;
     font-size: 14px;
     outline: none;
     box-sizing: border-box;
@@ -153,4 +153,30 @@ input {
 
 #save-btn:hover {
     background-color: #059669;
+}
+
+/* ========================================================== */
+/* REGIAO DAS NOVAS ALTERAÇÕES (V1.4 - BACKUP)                */
+/* ========================================================== */
+
+.backup-section {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.backup-btn {
+    flex: 1;
+    padding: 8px;
+    font-size: 11px;
+    background-color: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #374151;
+    transition: background 0.2s;
+}
+
+.backup-btn:hover {
+    background-color: #e5e7eb;
 }

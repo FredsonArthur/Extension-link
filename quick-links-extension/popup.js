@@ -1,4 +1,4 @@
-// 1. Função para Renderizar links e categorias (agora com suporte a busca)
+// 1. Função para Renderizar links e categorias (com suporte a busca da V1.3)
 function renderAll(searchTerm = "") {
   chrome.storage.sync.get(['myLinks', 'myCategories'], (result) => {
     const links = result.myLinks || [];
@@ -6,7 +6,7 @@ function renderAll(searchTerm = "") {
     
     // Atualizar o seletor (dropdown) de categorias
     const select = document.getElementById('category-input');
-    const currentSelection = select.value; // Guarda a seleção atual
+    const currentSelection = select.value; 
     select.innerHTML = '';
     categories.forEach(cat => {
       const option = document.createElement('option');
@@ -14,16 +14,13 @@ function renderAll(searchTerm = "") {
       option.textContent = cat;
       select.appendChild(option);
     });
-    // Restaura a seleção se ela ainda existir
     if (currentSelection) select.value = currentSelection;
 
-    // Limpar o container de links
     const container = document.getElementById('link-container');
     container.innerHTML = '';
 
-    // Renderizar links agrupados por cada categoria
     categories.forEach(cat => {
-      // FILTRO: O link deve pertencer à categoria E bater com o termo de busca (no nome ou na categoria)
+      // Filtro para a barra de pesquisa
       const filteredLinks = links.filter(l => {
         const belongsToCat = (l.category || 'Geral') === cat;
         const matchesSearch = l.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -31,7 +28,6 @@ function renderAll(searchTerm = "") {
         return belongsToCat && matchesSearch;
       });
       
-      // Só mostra o título da categoria se houver links filtrados nela
       if (filteredLinks.length > 0) {
         const header = document.createElement('h4');
         header.textContent = cat;
@@ -61,28 +57,20 @@ function renderAll(searchTerm = "") {
   });
 }
 
-// 2. Função central de salvamento
+// 2. Funções de salvamento e Categorias
 function saveLink(name, url, category) {
   if (name && url) {
     if (!url.startsWith('http')) url = 'https://' + url;
-
     chrome.storage.sync.get(['myLinks'], (result) => {
       const links = result.myLinks || [];
       links.push({ name, url, category });
-      
-      chrome.storage.sync.set({ myLinks: links }, () => {
-        renderAll();
-      });
+      chrome.storage.sync.set({ myLinks: links }, () => renderAll());
     });
   }
 }
 
-// 3. Evento de Busca em Tempo Real (NOVO V1.3)
-document.getElementById('search-input').addEventListener('input', (e) => {
-  renderAll(e.target.value);
-});
+document.getElementById('search-input').addEventListener('input', (e) => renderAll(e.target.value));
 
-// 4. Evento: Adicionar Nova Categoria (➕)
 document.getElementById('add-cat-btn').addEventListener('click', () => {
   const newCat = prompt("Digite o nome da nova categoria:");
   if (newCat) {
@@ -91,35 +79,28 @@ document.getElementById('add-cat-btn').addEventListener('click', () => {
       if (!categories.includes(newCat)) {
         categories.push(newCat);
         chrome.storage.sync.set({ myCategories: categories }, () => renderAll());
-      } else {
-        alert("Esta categoria já existe!");
       }
     });
   }
 });
 
-// 5. Evento: Editar Categoria (✏️)
 document.getElementById('edit-cat-btn').addEventListener('click', () => {
   const select = document.getElementById('category-input');
   const oldCat = select.value;
   const newName = prompt(`Renomear a categoria "${oldCat}" para:`, oldCat);
-
   if (newName && newName !== oldCat) {
     chrome.storage.sync.get(['myLinks', 'myCategories'], (result) => {
       let links = result.myLinks || [];
       let categories = result.myCategories || ['Geral', 'Faculdade', 'Concursos', 'RPG'];
-
       const catIndex = categories.indexOf(oldCat);
       if (catIndex > -1) categories[catIndex] = newName;
-
       links = links.map(l => l.category === oldCat ? { ...l, category: newName } : l);
-
       chrome.storage.sync.set({ myCategories: categories, myLinks: links }, () => renderAll());
     });
   }
 });
 
-// 6. Eventos de botões de links
+// 3. Eventos de botões de links
 document.getElementById('capture-btn').addEventListener('click', () => {
   const category = document.getElementById('category-input').value;
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -131,13 +112,70 @@ document.getElementById('save-btn').addEventListener('click', () => {
   const nameInput = document.getElementById('name-input');
   const urlInput = document.getElementById('url-input');
   const category = document.getElementById('category-input').value;
-
   saveLink(nameInput.value, urlInput.value, category);
-  nameInput.value = '';
-  urlInput.value = '';
+  nameInput.value = ''; urlInput.value = '';
 });
 
-// 7. Deletar e Inicializar
+// ==========================================================
+// NOVO: LÓGICA DE BACKUP (V1.4)
+// ==========================================================
+
+// Exportar Backup para ficheiro .json
+document.getElementById('export-btn').addEventListener('click', () => {
+  chrome.storage.sync.get(['myLinks', 'myCategories'], (result) => {
+    const backupData = {
+      links: result.myLinks || [],
+      categories: result.myCategories || ['Geral', 'Faculdade', 'Concursos', 'RPG'],
+      exportDate: new Date().toISOString()
+    };
+
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup_links_${new Date().toLocaleDateString().replace(/\//g, '-')}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+});
+
+// Acionar o seletor de ficheiro escondido
+document.getElementById('import-btn').addEventListener('click', () => {
+  document.getElementById('import-file').click();
+});
+
+// Processar a importação do ficheiro carregado
+document.getElementById('import-file').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    try {
+      const data = JSON.parse(event.target.result);
+      if (data.links && data.categories) {
+        if (confirm("Isto irá substituir todos os seus links atuais. Continuar?")) {
+          chrome.storage.sync.set({
+            myLinks: data.links,
+            myCategories: data.categories
+          }, () => {
+            alert("Backup importado com sucesso!");
+            renderAll();
+          });
+        }
+      } else {
+        alert("Ficheiro de backup inválido.");
+      }
+    } catch (err) {
+      alert("Erro ao ler o ficheiro.");
+    }
+  };
+  reader.readAsText(file);
+});
+
+// ==========================================================
+
 function deleteLink(index) {
   chrome.storage.sync.get(['myLinks'], (result) => {
     const links = result.myLinks;
@@ -146,5 +184,4 @@ function deleteLink(index) {
   });
 }
 
-// Inicia a extensão carregando tudo
 renderAll();
