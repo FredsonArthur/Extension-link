@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Meus Links Rápidos",
+  "version": "1.2",
+  "description": "Acesso rápido aos meus sites de estudo e trabalho.",
+  "permissions": ["storage", "tabs"],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}

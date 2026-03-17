@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h3>🚀 Atalhos Rápidos</h3>
+
+  <button id="capture-btn" class="secondary-btn">+ Adicionar Aba Atual</button>
+
+  <div id="link-container">
+    </div>
+  <hr>
+  <div class="category-manager">
+    <select id = "category-input">
+      <option value = "Geral"> Geral </option>
+      <option value = "Faculdade"> Faculdade </option>
+      <option value = "Concurso"> Concurso </option>
+      <option value = "RPG"> RPG </option>
+    </select>
+    <div class = "btn-row">
+      <button id = "add-cat-btn" title = "Nova Categoria"> ➕ </button>
+      <button id = "edit-cat-btn" title = "Editar Categoria Selecionada"> ✏️ </button>
+    </div>
+  </div>
+
+  <div id = "link-inputs">
+    <input type="text" id="name-input" placeholder="Nome (ex: GitHub)">
+    <input type="text" id="url-input" placeholder="URL (https://...)">
+    <button id="save-btn">Salvar Link</button>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
