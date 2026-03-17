@@ -11,6 +11,26 @@ h3 {
     color: #333;
 }
 
+/* --- NOVO: Barra de Pesquisa (V1.3) --- */
+.search-container {
+    margin-bottom: 15px;
+}
+
+#search-input {
+    width: 100%;
+    padding: 10px 15px;
+    border: 2px solid #2563eb; /* Azul para destacar a função de busca */
+    border-radius: 20px; /* Estilo arredondado tipo Google */
+    font-size: 14px;
+    outline: none;
+    box-sizing: border-box;
+    transition: box-shadow 0.2s;
+}
+
+#search-input:focus {
+    box-shadow: 0 0 8px rgba(37, 99, 235, 0.4);
+}
+
 /* Botão de captura principal */
 #capture-btn {
     width: 100%;
@@ -35,7 +55,7 @@ h3 {
 h4 {
     margin: 10px 0 5px 0;
     color: #666;
-    font-size: 12px;
+    font-size: 11px;
     border-bottom: 1px solid #ddd;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -70,7 +90,7 @@ h4 {
     cursor: pointer;
 }
 
-/* --- NOVO: Gerenciador de Categorias --- */
+/* --- Gerenciador de Categorias --- */
 .category-manager {
     display: flex;
     flex-direction: column;
@@ -105,8 +125,8 @@ select {
     background: #d1d5db;
 }
 
-/* --- Inputs de Link --- */
-.link-inputs {
+/* --- Seção de Entrada de Links --- */
+#link-inputs {
     display: flex;
     flex-direction: column;
     gap: 5px;
