@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Meus Links Rápidos",
-  "version": "1.6",
+  "version": "1.7",
   "description": "Acesso rápido aos meus sites de estudo e trabalho.",
   "permissions": ["storage", "tabs"],
   "action": {

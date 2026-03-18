@@ -1,10 +1,12 @@
-// 1. Função para Renderizar links e categorias (com suporte a busca da V1.3 e Favicons da V1.5)
+// Variável global para controlar o estado de edição (V1.7)
+let editIndex = null;
+
+// 1. Função para Renderizar links e categorias
 function renderAll(searchTerm = "") {
   chrome.storage.sync.get(['myLinks', 'myCategories'], (result) => {
     const links = result.myLinks || [];
     const categories = result.myCategories || ['Geral', 'Faculdade', 'Concursos', 'RPG'];
     
-    // Atualizar o seletor (dropdown) de categorias
     const select = document.getElementById('category-input');
     const currentSelection = select.value; 
     select.innerHTML = '';
@@ -20,7 +22,6 @@ function renderAll(searchTerm = "") {
     container.innerHTML = '';
 
     categories.forEach(cat => {
-      // Filtro para a barra de pesquisa (V1.3)
       const filteredLinks = links.filter(l => {
         const belongsToCat = (l.category || 'Geral') === cat;
         const matchesSearch = l.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -38,13 +39,11 @@ function renderAll(searchTerm = "") {
           const div = document.createElement('div');
           div.className = 'link-item';
           
-          // --- Estrutura para Favicon + Link (V1.5) ---
           const linkContent = document.createElement('a');
           linkContent.href = link.url;
           linkContent.target = "_blank";
           linkContent.className = 'link-content';
 
-          // Elemento de Imagem do Favicon
           const img = document.createElement('img');
           img.className = 'favicon';
           try {
@@ -55,20 +54,32 @@ function renderAll(searchTerm = "") {
           }
           img.onerror = () => { img.src = 'icons/icon16.png'; }; 
 
-          // Texto do link
           const textSpan = document.createElement('span');
           textSpan.textContent = link.name.length > 30 ? link.name.substring(0, 27) + '...' : link.name;
 
           linkContent.appendChild(img);
           linkContent.appendChild(textSpan);
 
+          // --- NOVO: Container de botões de ação (V1.7) ---
+          const actionsDiv = document.createElement('div');
+          actionsDiv.className = 'link-actions';
+
+          const editBtn = document.createElement('button');
+          editBtn.textContent = '✏️';
+          editBtn.className = 'edit-link-btn';
+          editBtn.title = "Editar link";
+          editBtn.onclick = () => prepareEditLink(globalIndex);
+
           const delBtn = document.createElement('button');
           delBtn.textContent = 'X';
           delBtn.className = 'delete-btn';
           delBtn.onclick = () => deleteLink(globalIndex);
 
+          actionsDiv.appendChild(editBtn);
+          actionsDiv.appendChild(delBtn);
+
           div.appendChild(linkContent);
-          div.appendChild(delBtn);
+          div.appendChild(actionsDiv);
           container.appendChild(div);
         });
       }
@@ -76,22 +87,65 @@ function renderAll(searchTerm = "") {
   });
 }
 
-// 2. Funções de salvamento e Gerenciamento de Categorias (V1.2)
-function saveLink(name, url, category) {
-  if (name && url) {
-    if (!url.startsWith('http')) url = 'https://' + url;
-    chrome.storage.sync.get(['myLinks'], (result) => {
-      const links = result.myLinks || [];
-      links.push({ name, url, category });
-      chrome.storage.sync.set({ myLinks: links }, () => renderAll());
-    });
-  }
+// 2. Lógica de Edição de Links (V1.7)
+function prepareEditLink(index) {
+  chrome.storage.sync.get(['myLinks'], (result) => {
+    const links = result.myLinks || [];
+    const link = links[index];
+    
+    // Preenche os campos com os dados para edição
+    document.getElementById('name-input').value = link.name;
+    document.getElementById('url-input').value = link.url;
+    document.getElementById('category-input').value = link.category || 'Geral';
+    
+    // Altera o estado do botão de salvar
+    const saveBtn = document.getElementById('save-btn');
+    saveBtn.textContent = "Atualizar Link";
+    saveBtn.style.backgroundColor = "var(--accent-color)";
+    
+    editIndex = index;
+    document.getElementById('name-input').focus();
+  });
 }
 
-// Evento de Busca em Tempo Real (V1.3)
+// 3. Evento do Botão de Salvar (Atualizado V1.7 para suportar Edição)
+document.getElementById('save-btn').addEventListener('click', () => {
+  const nameInput = document.getElementById('name-input');
+  const urlInput = document.getElementById('url-input');
+  const category = document.getElementById('category-input').value;
+  const name = nameInput.value;
+  let url = urlInput.value;
+
+  if (name && url) {
+    if (!url.startsWith('http')) url = 'https://' + url;
+    
+    chrome.storage.sync.get(['myLinks'], (result) => {
+      let links = result.myLinks || [];
+      
+      if (editIndex !== null) {
+        // MODO EDIÇÃO: Atualiza o link existente
+        links[editIndex] = { name, url, category };
+        editIndex = null;
+        const saveBtn = document.getElementById('save-btn');
+        saveBtn.textContent = "Salvar Link";
+        saveBtn.style.backgroundColor = "#10b981"; 
+      } else {
+        // MODO NORMAL: Adiciona novo link
+        links.push({ name, url, category });
+      }
+
+      chrome.storage.sync.set({ myLinks: links }, () => {
+        renderAll();
+        nameInput.value = '';
+        urlInput.value = '';
+      });
+    });
+  }
+});
+
+// 4. Gerenciamento de Categorias, Busca e Backup (V1.2 - V1.4)
 document.getElementById('search-input').addEventListener('input', (e) => renderAll(e.target.value));
 
-// Adicionar Nova Categoria
 document.getElementById('add-cat-btn').addEventListener('click', () => {
   const newCat = prompt("Digite o nome da nova categoria:");
   if (newCat) {
@@ -105,7 +159,6 @@ document.getElementById('add-cat-btn').addEventListener('click', () => {
   }
 });
 
-// Editar Categoria
 document.getElementById('edit-cat-btn').addEventListener('click', () => {
   const select = document.getElementById('category-input');
   const oldCat = select.value;
@@ -122,23 +175,19 @@ document.getElementById('edit-cat-btn').addEventListener('click', () => {
   }
 });
 
-// 3. Eventos de botões de links
 document.getElementById('capture-btn').addEventListener('click', () => {
   const category = document.getElementById('category-input').value;
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    saveLink(tabs[0].title, tabs[0].url, category);
+    const name = tabs[0].title;
+    let url = tabs[0].url;
+    chrome.storage.sync.get(['myLinks'], (result) => {
+      const links = result.myLinks || [];
+      links.push({ name, url, category });
+      chrome.storage.sync.set({ myLinks: links }, () => renderAll());
+    });
   });
 });
 
-document.getElementById('save-btn').addEventListener('click', () => {
-  const nameInput = document.getElementById('name-input');
-  const urlInput = document.getElementById('url-input');
-  const category = document.getElementById('category-input').value;
-  saveLink(nameInput.value, urlInput.value, category);
-  nameInput.value = ''; urlInput.value = '';
-});
-
-// 4. LÓGICA DE BACKUP (V1.4)
 document.getElementById('export-btn').addEventListener('click', () => {
   chrome.storage.sync.get(['myLinks', 'myCategories'], (result) => {
     const backupData = {
@@ -169,10 +218,7 @@ document.getElementById('import-file').addEventListener('change', (e) => {
       const data = JSON.parse(event.target.result);
       if (data.links && data.categories) {
         if (confirm("Isto irá substituir todos os seus links atuais. Continuar?")) {
-          chrome.storage.sync.set({
-            myLinks: data.links,
-            myCategories: data.categories
-          }, () => {
+          chrome.storage.sync.set({ myLinks: data.links, myCategories: data.categories }, () => {
             alert("Backup importado com sucesso!");
             renderAll();
           });
@@ -185,40 +231,39 @@ document.getElementById('import-file').addEventListener('change', (e) => {
   reader.readAsText(file);
 });
 
-// 5. Função para Deletar
 function deleteLink(index) {
   chrome.storage.sync.get(['myLinks'], (result) => {
-    const links = result.myLinks;
+    const links = result.myLinks || [];
     links.splice(index, 1);
     chrome.storage.sync.set({ myLinks: links }, () => renderAll());
   });
 }
 
-// 6. LÓGICA DE TEMA (V1.6)
+// 5. LÓGICA DE TEMA (V1.6)
 const themeToggle = document.getElementById('theme-toggle');
 const themeText = document.getElementById('theme-text');
 
-// Carregar tema salvo ao abrir a extensão
 chrome.storage.sync.get(['theme'], (result) => {
   if (result.theme === 'dark') {
     document.documentElement.setAttribute('data-theme', 'dark');
-    themeToggle.checked = true;
-    themeText.textContent = "☀️ Modo Claro";
+    if (themeToggle) themeToggle.checked = true;
+    if (themeText) themeText.textContent = "☀️ Modo Claro";
   }
 });
 
-// Ouvir a mudança no interruptor para alternar e salvar a preferência
-themeToggle.addEventListener('change', (e) => {
-  if (e.target.checked) {
-    document.documentElement.setAttribute('data-theme', 'dark');
-    themeText.textContent = "☀️ Modo Claro";
-    chrome.storage.sync.set({ theme: 'dark' });
-  } else {
-    document.documentElement.setAttribute('data-theme', 'light');
-    themeText.textContent = "🌙 Modo Escuro";
-    chrome.storage.sync.set({ theme: 'light' });
-  }
-});
+if (themeToggle) {
+  themeToggle.addEventListener('change', (e) => {
+    if (e.target.checked) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      themeText.textContent = "☀️ Modo Claro";
+      chrome.storage.sync.set({ theme: 'dark' });
+    } else {
+      document.documentElement.setAttribute('data-theme', 'light');
+      themeText.textContent = "🌙 Modo Escuro";
+      chrome.storage.sync.set({ theme: 'light' });
+    }
+  });
+}
 
 // Inicialização
 renderAll();

@@ -160,6 +160,27 @@ h4 {
     text-overflow: ellipsis;
 }
 
+/* --- NOVO: Botões de Ação do Link (V1.7) --- */
+.link-actions {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.edit-link-btn {
+    background: var(--input-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 10px;
+}
+
+.edit-link-btn:hover {
+    background: var(--border-color);
+}
+
 .delete-btn {
     background: #ff4444;
     color: white;
@@ -167,7 +188,7 @@ h4 {
     padding: 4px 8px;
     border-radius: 3px;
     cursor: pointer;
-    margin-left: 10px;
+    font-size: 10px;
 }
 
 /* --- Gerenciador de Categorias --- */
@@ -233,6 +254,7 @@ input {
     border-radius: 4px;
     cursor: pointer;
     font-weight: bold;
+    transition: background 0.2s;
 }
 
 /* --- Seção de Backup (V1.4) --- */
