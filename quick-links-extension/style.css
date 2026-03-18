@@ -154,13 +154,33 @@ h4 {
 }
 
 .link-content span {
+    display: flex;
+    align-items: center;
     font-size: 14px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* --- NOVO: Botões de Ação do Link (V1.7) --- */
+/* --- NOVO: Contador de Cliques (V1.8) --- */
+.click-count {
+    font-size: 9px;
+    background: var(--accent-color);
+    color: white;
+    padding: 1px 5px;
+    border-radius: 10px;
+    margin-left: 8px;
+    font-weight: bold;
+    opacity: 0.8;
+    flex-shrink: 0;
+}
+
+[data-theme="dark"] .click-count {
+    background: #4b5563; /* Tom mais suave para o modo escuro */
+    color: #e5e7eb;
+}
+
+/* --- Botões de Ação do Link (V1.7) --- */
 .link-actions {
     display: flex;
     gap: 5px;

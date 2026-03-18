@@ -1,7 +1,7 @@
 // Variável global para controlar o estado de edição (V1.7)
 let editIndex = null;
 
-// 1. Função para Renderizar links e categorias
+// 1. Função para Renderizar links e categorias (Atualizada V1.8)
 function renderAll(searchTerm = "") {
   chrome.storage.sync.get(['myLinks', 'myCategories'], (result) => {
     const links = result.myLinks || [];
@@ -44,6 +44,9 @@ function renderAll(searchTerm = "") {
           linkContent.target = "_blank";
           linkContent.className = 'link-content';
 
+          // --- REGISTRAR CLIQUE (V1.8) ---
+          linkContent.onclick = () => registerClick(globalIndex);
+
           const img = document.createElement('img');
           img.className = 'favicon';
           try {
@@ -55,12 +58,19 @@ function renderAll(searchTerm = "") {
           img.onerror = () => { img.src = 'icons/icon16.png'; }; 
 
           const textSpan = document.createElement('span');
-          textSpan.textContent = link.name.length > 30 ? link.name.substring(0, 27) + '...' : link.name;
+          textSpan.textContent = link.name.length > 25 ? link.name.substring(0, 22) + '...' : link.name;
+
+          // --- EXIBIR CONTADOR (V1.8) ---
+          if (link.clicks > 0) {
+            const badge = document.createElement('span');
+            badge.className = 'click-count';
+            badge.textContent = link.clicks;
+            textSpan.appendChild(badge);
+          }
 
           linkContent.appendChild(img);
           linkContent.appendChild(textSpan);
 
-          // --- NOVO: Container de botões de ação (V1.7) ---
           const actionsDiv = document.createElement('div');
           actionsDiv.className = 'link-actions';
 
@@ -87,18 +97,31 @@ function renderAll(searchTerm = "") {
   });
 }
 
-// 2. Lógica de Edição de Links (V1.7)
+// 2. Função para Registrar Clique (NOVO V1.8)
+function registerClick(index) {
+  chrome.storage.sync.get(['myLinks'], (result) => {
+    let links = result.myLinks || [];
+    if (links[index]) {
+      links[index].clicks = (links[index].clicks || 0) + 1;
+      chrome.storage.sync.set({ myLinks: links }, () => {
+        // Renderiza novamente para atualizar o contador visualmente
+        const currentSearch = document.getElementById('search-input').value;
+        renderAll(currentSearch);
+      });
+    }
+  });
+}
+
+// 3. Lógica de Edição de Links (V1.7)
 function prepareEditLink(index) {
   chrome.storage.sync.get(['myLinks'], (result) => {
     const links = result.myLinks || [];
     const link = links[index];
     
-    // Preenche os campos com os dados para edição
     document.getElementById('name-input').value = link.name;
     document.getElementById('url-input').value = link.url;
     document.getElementById('category-input').value = link.category || 'Geral';
     
-    // Altera o estado do botão de salvar
     const saveBtn = document.getElementById('save-btn');
     saveBtn.textContent = "Atualizar Link";
     saveBtn.style.backgroundColor = "var(--accent-color)";
@@ -108,7 +131,7 @@ function prepareEditLink(index) {
   });
 }
 
-// 3. Evento do Botão de Salvar (Atualizado V1.7 para suportar Edição)
+// 4. Evento do Botão de Salvar (Atualizado V1.8 para preservar cliques)
 document.getElementById('save-btn').addEventListener('click', () => {
   const nameInput = document.getElementById('name-input');
   const urlInput = document.getElementById('url-input');
@@ -123,15 +146,16 @@ document.getElementById('save-btn').addEventListener('click', () => {
       let links = result.myLinks || [];
       
       if (editIndex !== null) {
-        // MODO EDIÇÃO: Atualiza o link existente
-        links[editIndex] = { name, url, category };
+        // MODO EDIÇÃO: Atualiza preservando os cliques existentes
+        const currentClicks = links[editIndex].clicks || 0;
+        links[editIndex] = { name, url, category, clicks: currentClicks };
         editIndex = null;
         const saveBtn = document.getElementById('save-btn');
         saveBtn.textContent = "Salvar Link";
         saveBtn.style.backgroundColor = "#10b981"; 
       } else {
-        // MODO NORMAL: Adiciona novo link
-        links.push({ name, url, category });
+        // MODO NORMAL: Adiciona novo link com 0 cliques
+        links.push({ name, url, category, clicks: 0 });
       }
 
       chrome.storage.sync.set({ myLinks: links }, () => {
@@ -143,7 +167,7 @@ document.getElementById('save-btn').addEventListener('click', () => {
   }
 });
 
-// 4. Gerenciamento de Categorias, Busca e Backup (V1.2 - V1.4)
+// 5. Gerenciamento de Categorias, Busca e Backup (V1.2 - V1.4)
 document.getElementById('search-input').addEventListener('input', (e) => renderAll(e.target.value));
 
 document.getElementById('add-cat-btn').addEventListener('click', () => {
@@ -182,7 +206,8 @@ document.getElementById('capture-btn').addEventListener('click', () => {
     let url = tabs[0].url;
     chrome.storage.sync.get(['myLinks'], (result) => {
       const links = result.myLinks || [];
-      links.push({ name, url, category });
+      // Novo link via captura começa com 0 cliques
+      links.push({ name, url, category, clicks: 0 });
       chrome.storage.sync.set({ myLinks: links }, () => renderAll());
     });
   });
@@ -239,7 +264,7 @@ function deleteLink(index) {
   });
 }
 
-// 5. LÓGICA DE TEMA (V1.6)
+// 6. LÓGICA DE TEMA (V1.6)
 const themeToggle = document.getElementById('theme-toggle');
 const themeText = document.getElementById('theme-text');
 
