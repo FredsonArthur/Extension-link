@@ -1,10 +1,11 @@
 // Variável global para controlar o estado de edição (V1.7)
 let editIndex = null;
 
-// 1. Função para Renderizar links e categorias (Atualizada V1.8)
+// 1. Função para Renderizar links e categorias (Atualizada V1.9 - Ordenação por Cliques)
 function renderAll(searchTerm = "") {
   chrome.storage.sync.get(['myLinks', 'myCategories'], (result) => {
-    const links = result.myLinks || [];
+    // Aplicamos a ordenação: links com mais cliques aparecem primeiro (V1.9)
+    const sortedLinks = [...(result.myLinks || [])].sort((a, b) => (b.clicks || 0) - (a.clicks || 0));
     const categories = result.myCategories || ['Geral', 'Faculdade', 'Concursos', 'RPG'];
     
     const select = document.getElementById('category-input');
@@ -22,7 +23,7 @@ function renderAll(searchTerm = "") {
     container.innerHTML = '';
 
     categories.forEach(cat => {
-      const filteredLinks = links.filter(l => {
+      const filteredLinks = sortedLinks.filter(l => {
         const belongsToCat = (l.category || 'Geral') === cat;
         const matchesSearch = l.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                               cat.toLowerCase().includes(searchTerm.toLowerCase());
@@ -35,7 +36,10 @@ function renderAll(searchTerm = "") {
         container.appendChild(header);
 
         filteredLinks.forEach(link => {
-          const globalIndex = links.indexOf(link); 
+          // Buscamos o índice real no array original (sem ordenação) para manter funções de edição/delete (V1.9)
+          const originalLinks = result.myLinks || [];
+          const globalIndex = originalLinks.findIndex(l => l.url === link.url && l.name === link.name);
+          
           const div = document.createElement('div');
           div.className = 'link-item';
           
@@ -44,7 +48,7 @@ function renderAll(searchTerm = "") {
           linkContent.target = "_blank";
           linkContent.className = 'link-content';
 
-          // --- REGISTRAR CLIQUE (V1.8) ---
+          // Registrar clique (V1.8)
           linkContent.onclick = () => registerClick(globalIndex);
 
           const img = document.createElement('img');
@@ -60,7 +64,7 @@ function renderAll(searchTerm = "") {
           const textSpan = document.createElement('span');
           textSpan.textContent = link.name.length > 25 ? link.name.substring(0, 22) + '...' : link.name;
 
-          // --- EXIBIR CONTADOR (V1.8) ---
+          // Exibir contador (V1.8)
           if (link.clicks > 0) {
             const badge = document.createElement('span');
             badge.className = 'click-count';
@@ -97,14 +101,13 @@ function renderAll(searchTerm = "") {
   });
 }
 
-// 2. Função para Registrar Clique (NOVO V1.8)
+// 2. Função para Registrar Clique (V1.8)
 function registerClick(index) {
   chrome.storage.sync.get(['myLinks'], (result) => {
     let links = result.myLinks || [];
-    if (links[index]) {
+    if (links[index] !== undefined) {
       links[index].clicks = (links[index].clicks || 0) + 1;
       chrome.storage.sync.set({ myLinks: links }, () => {
-        // Renderiza novamente para atualizar o contador visualmente
         const currentSearch = document.getElementById('search-input').value;
         renderAll(currentSearch);
       });
@@ -131,7 +134,7 @@ function prepareEditLink(index) {
   });
 }
 
-// 4. Evento do Botão de Salvar (Atualizado V1.8 para preservar cliques)
+// 4. Evento do Botão de Salvar (Preserva cliques na V1.8)
 document.getElementById('save-btn').addEventListener('click', () => {
   const nameInput = document.getElementById('name-input');
   const urlInput = document.getElementById('url-input');
@@ -146,7 +149,6 @@ document.getElementById('save-btn').addEventListener('click', () => {
       let links = result.myLinks || [];
       
       if (editIndex !== null) {
-        // MODO EDIÇÃO: Atualiza preservando os cliques existentes
         const currentClicks = links[editIndex].clicks || 0;
         links[editIndex] = { name, url, category, clicks: currentClicks };
         editIndex = null;
@@ -154,7 +156,6 @@ document.getElementById('save-btn').addEventListener('click', () => {
         saveBtn.textContent = "Salvar Link";
         saveBtn.style.backgroundColor = "#10b981"; 
       } else {
-        // MODO NORMAL: Adiciona novo link com 0 cliques
         links.push({ name, url, category, clicks: 0 });
       }
 
@@ -206,7 +207,6 @@ document.getElementById('capture-btn').addEventListener('click', () => {
     let url = tabs[0].url;
     chrome.storage.sync.get(['myLinks'], (result) => {
       const links = result.myLinks || [];
-      // Novo link via captura começa com 0 cliques
       links.push({ name, url, category, clicks: 0 });
       chrome.storage.sync.set({ myLinks: links }, () => renderAll());
     });
@@ -259,8 +259,10 @@ document.getElementById('import-file').addEventListener('change', (e) => {
 function deleteLink(index) {
   chrome.storage.sync.get(['myLinks'], (result) => {
     const links = result.myLinks || [];
-    links.splice(index, 1);
-    chrome.storage.sync.set({ myLinks: links }, () => renderAll());
+    if (index > -1 && index < links.length) {
+      links.splice(index, 1);
+      chrome.storage.sync.set({ myLinks: links }, () => renderAll());
+    }
   });
 }
 
