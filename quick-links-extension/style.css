@@ -71,14 +71,29 @@ h4 {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.link-item a {
-    color: #2563eb;
+/* --- NOVO: Estilo para Favicons (V1.5) --- */
+.link-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     text-decoration: none;
+    flex-grow: 1;
+    /* Impede que o texto empurre o botão de apagar */
+    overflow: hidden; 
+    color: #2563eb;
+}
+
+.favicon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0; /* Impede o ícone de amassar se o texto for longo */
+}
+
+.link-content span {
     font-size: 14px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 200px;
 }
 
 .delete-btn {
@@ -88,6 +103,7 @@ h4 {
     padding: 4px 8px;
     border-radius: 3px;
     cursor: pointer;
+    margin-left: 10px;
 }
 
 /* --- Gerenciador de Categorias --- */
@@ -155,10 +171,7 @@ input {
     background-color: #059669;
 }
 
-/* ========================================================== */
-/* REGIAO DAS NOVAS ALTERAÇÕES (V1.4 - BACKUP)                */
-/* ========================================================== */
-
+/* --- Seção de Backup (V1.4) --- */
 .backup-section {
     display: flex;
     gap: 10px;
