@@ -38,7 +38,7 @@ function renderAll(searchTerm = "") {
           const div = document.createElement('div');
           div.className = 'link-item';
           
-          // --- NOVO: Estrutura para Favicon + Link (V1.5) ---
+          // --- Estrutura para Favicon + Link (V1.5) ---
           const linkContent = document.createElement('a');
           linkContent.href = link.url;
           linkContent.target = "_blank";
@@ -47,12 +47,11 @@ function renderAll(searchTerm = "") {
           // Elemento de Imagem do Favicon
           const img = document.createElement('img');
           img.className = 'favicon';
-          // Usando o serviço do Google para buscar o ícone pelo domínio
           try {
             const domain = new URL(link.url).hostname;
             img.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
           } catch (e) {
-            img.src = 'icons/icon16.png'; // Fallback se a URL for inválida
+            img.src = 'icons/icon16.png'; 
           }
           img.onerror = () => { img.src = 'icons/icon16.png'; }; 
 
@@ -62,7 +61,6 @@ function renderAll(searchTerm = "") {
 
           linkContent.appendChild(img);
           linkContent.appendChild(textSpan);
-          // ------------------------------------------------
 
           const delBtn = document.createElement('button');
           delBtn.textContent = 'X';
@@ -141,7 +139,6 @@ document.getElementById('save-btn').addEventListener('click', () => {
 });
 
 // 4. LÓGICA DE BACKUP (V1.4)
-// Exportar Backup para ficheiro .json
 document.getElementById('export-btn').addEventListener('click', () => {
   chrome.storage.sync.get(['myLinks', 'myCategories'], (result) => {
     const backupData = {
@@ -159,7 +156,6 @@ document.getElementById('export-btn').addEventListener('click', () => {
   });
 });
 
-// Importar Backup
 document.getElementById('import-btn').addEventListener('click', () => {
   document.getElementById('import-file').click();
 });
@@ -197,6 +193,32 @@ function deleteLink(index) {
     chrome.storage.sync.set({ myLinks: links }, () => renderAll());
   });
 }
+
+// 6. LÓGICA DE TEMA (V1.6)
+const themeToggle = document.getElementById('theme-toggle');
+const themeText = document.getElementById('theme-text');
+
+// Carregar tema salvo ao abrir a extensão
+chrome.storage.sync.get(['theme'], (result) => {
+  if (result.theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    themeToggle.checked = true;
+    themeText.textContent = "☀️ Modo Claro";
+  }
+});
+
+// Ouvir a mudança no interruptor para alternar e salvar a preferência
+themeToggle.addEventListener('change', (e) => {
+  if (e.target.checked) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    themeText.textContent = "☀️ Modo Claro";
+    chrome.storage.sync.set({ theme: 'dark' });
+  } else {
+    document.documentElement.setAttribute('data-theme', 'light');
+    themeText.textContent = "🌙 Modo Escuro";
+    chrome.storage.sync.set({ theme: 'light' });
+  }
+});
 
 // Inicialização
 renderAll();

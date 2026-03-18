@@ -5,32 +5,40 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div class="theme-switch-wrapper">
+    <span id="theme-text">🌙 Modo Escuro</span>
+    <label class="switch">
+      <input type="checkbox" id="theme-toggle">
+      <span class="slider round"></span>
+    </label>
+  </div>
+
   <h3>🚀 Atalhos Rápidos</h3>
 
-  <div class = "search-container">
-    <input type = "text" id = "search-input" placeholder = "🔍 Buscar link ou categoria...">
-
+  <div class="search-container">
+    <input type="text" id="search-input" placeholder="🔍 Buscar link ou categoria...">
   </div>
 
   <button id="capture-btn" class="secondary-btn">+ Adicionar Aba Atual</button>
 
-  <div id="link-container">
-    </div>
+  <div id="link-container"></div>
+  
   <hr>
+  
   <div class="category-manager">
-    <select id = "category-input">
-      <option value = "Geral"> Geral </option>
-      <option value = "Faculdade"> Faculdade </option>
-      <option value = "Concurso"> Concurso </option>
-      <option value = "RPG"> RPG </option>
+    <select id="category-input">
+      <option value="Geral"> Geral </option>
+      <option value="Faculdade"> Faculdade </option>
+      <option value="Concursos"> Concursos </option>
+      <option value="RPG"> RPG </option>
     </select>
-    <div class = "btn-row">
-      <button id = "add-cat-btn" title = "Nova Categoria"> ➕ </button>
-      <button id = "edit-cat-btn" title = "Editar Categoria Selecionada"> ✏️ </button>
+    <div class="btn-row">
+      <button id="add-cat-btn" title="Nova Categoria"> ➕ </button>
+      <button id="edit-cat-btn" title="Editar Categoria Selecionada"> ✏️ </button>
     </div>
   </div>
 
-  <div id = "link-inputs">
+  <div id="link-inputs">
     <input type="text" id="name-input" placeholder="Nome (ex: GitHub)">
     <input type="text" id="url-input" placeholder="URL (https://...)">
     <button id="save-btn">Salvar Link</button>
@@ -38,9 +46,9 @@
 
   <hr>
 
-  <div class = "backup-section">
-    <button id="export-btn" class = "backup-btn">📤 Exportar Backup</button>
-    <button id="import-btn" class = "backup-btn">📥 Importar Backup</button>
+  <div class="backup-section">
+    <button id="export-btn" class="backup-btn">📤 Exportar Backup</button>
+    <button id="import-btn" class="backup-btn">📥 Importar Backup</button>
     <input type="file" id="import-file" accept=".json" style="display: none;">
   </div>
   
